@@ -1,0 +1,10 @@
+version: "3.3"
+
+services:
+  frontend:
+    build:
+      context: .
+    container_name: uir
+    restart: always
+    ports:
+      - 8000:80
