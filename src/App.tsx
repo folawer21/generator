@@ -1,6 +1,7 @@
-import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation, Navigate } from "react-router-dom";
 import { observer } from "mobx-react-lite";
 import { Menu } from "antd";
+
 import {
   AppStyled,
   AppWrapper,
@@ -22,7 +23,7 @@ export const App = observer((): JSX.Element => {
     <AppWrapper>
       <Header>
         <HeaderContent>
-          <img src="https://i.yapx.ru/W2oMO.png" />
+          <img src="https://i.yapx.ru/W2oMO.png" alt="Logo" />
           <Menu
             theme="dark"
             mode="horizontal"
@@ -35,14 +36,12 @@ export const App = observer((): JSX.Element => {
       </Header>
       <AppStyled>
         <Content>
-        <Routes>
-          <Route
-            path={clientRoutes.characteristics}
-            element={<CharacteristicsPage />}
-          />
-          <Route path={clientRoutes.questions} element={<QuestionPage />} />
-          <Route path={clientRoutes.generatedTests} element={<GeneratedTestsPage />} />
-        </Routes>
+          <Routes>
+            <Route path="/" element={<Navigate to="/characteristics" />} />
+            <Route path={clientRoutes.characteristics} element={<CharacteristicsPage />} />
+            <Route path={clientRoutes.questions} element={<QuestionPage />} />
+            <Route path={clientRoutes.generatedTests} element={<GeneratedTestsPage />} />
+          </Routes>
         </Content>
       </AppStyled>
     </AppWrapper>
