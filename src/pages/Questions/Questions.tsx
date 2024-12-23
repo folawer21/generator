@@ -25,6 +25,11 @@ export const QuestionPage = (): JSX.Element => {
       })
       .finally(() => setIsLoading(false));
   }, []);
+  
+  const handleFinishTestClick = () => {
+    console.log("Тест завершён");
+    // Добавьте здесь логику для завершения теста, например, отправка ответов или переход на другую страницу
+  };
 
   const renderContent = (): JSX.Element => {
     if (isLoading) {
@@ -98,6 +103,11 @@ export const QuestionPage = (): JSX.Element => {
               />
             </div>
           ))}
+          <Row justify="center" style={{ marginTop: 30 }}>
+            <Button type="primary" onClick={handleFinishTestClick} style={{width: 300, height: 80}}>
+              Закончить тест
+            </Button>
+          </Row>
         </>
       );
     } else {

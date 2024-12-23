@@ -1,6 +1,6 @@
 import { ApiCommon } from "../Common";
 import { TResponse } from "../Common/types";
-import { TQuestion, TCharacteristics } from "./types";
+import { TQuestion, TCharacteristics, TGeneratedTests } from "./types";
 
 export class MephiApiClass extends ApiCommon {
   public getQuestions = <T = TQuestion[]>(): TResponse<T> =>
@@ -8,6 +8,10 @@ export class MephiApiClass extends ApiCommon {
 
   public getCharacteristics = <T = TCharacteristics[]>(): TResponse<T> =>
     this.get<T>("/api/v1/get-characteristics");
+
+  public getGeneratedTests = <T = TGeneratedTests[]>(): TResponse<T> =>
+    this.get<T>("/api/v1/get-generatedTests");
+
 }
 
 export const MephiApi = new MephiApiClass();

@@ -8,6 +8,7 @@ export class AxiosService {
 
   constructor() {
     this.axios = Axios.create({
+
       validateStatus: (status) => status >= 200 && status < 400,
       timeout: 30000,
       headers: {
@@ -15,34 +16,32 @@ export class AxiosService {
       }
     });
 
-    this.axios.interceptors.request.use((config) => {
-      this.numberOfAjaxCAllPending++;
-      NProgress.start();
-      return config;
-    });
-
     this.axios.interceptors.response.use(
       (response) => {
         this.numberOfAjaxCAllPending--;
-
         if (this.numberOfAjaxCAllPending === 0) {
           NProgress.done(true);
         }
-
         return response;
       },
       async (error) => {
         this.numberOfAjaxCAllPending--;
-
         if (this.numberOfAjaxCAllPending === 0) {
           NProgress.done(true);
         }
-        if (error.response.data.detail) {
+        console.error("Ошибка запроса:", {
+          url: error.config.url,
+          status: error.response.status,
+          data: error.response.data,
+        });
+    
+        // Убедитесь, что обрабатываете случаи, когда `error.response` может отсутствовать
+        if (error.response && error.response.data && error.response.data.detail) {
           return Promise.reject(error.response.data.detail);
         }
-
+    
         return Promise.reject(error);
       }
     );
   }
-}
+};

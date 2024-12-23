@@ -1,4 +1,5 @@
 export const clientRoutes = {
   questions: "/questions",
-  characteristics: "/characteristics"
+  characteristics: "/characteristics",
+  generatedTests: '/generated-tests'
 };

@@ -1,6 +1,7 @@
 import jsonServer from "json-server";
 import getQuestionsJSON from "./mocks/getQuestions.js";
 import getCharacteristicsJSON from "./mocks/getCharacteristics.js";
+import getGeneratedTestsJSON from "./mocks/getGeneratedTests.js";
 
 const addDelay = (delay = 0) =>
   new Promise((resolve) => setTimeout(resolve, delay));
@@ -19,6 +20,11 @@ server.get("/api/v1/get-questions", async (req, res) => {
 server.get("/api/v1/get-characteristics", async (req, res) => {
   await addDelay(300);
   await res.send(getCharacteristicsJSON);
+});
+
+server.get("/api/v1/get-generatedTests", async (req, res) => {
+  await addDelay(300);
+  await res.send(getGeneratedTestsJSON)
 });
 
 server.listen(3004, () => {
