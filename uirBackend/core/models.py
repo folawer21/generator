@@ -16,7 +16,6 @@ class Question(models.Model):
         return self.text
 
 class Characteristic(models.Model):
-    # Соответствует `export type TCharacteristics = { id: number; name: string; usage: boolean; };`
     name = models.CharField(max_length=255)
     usage = models.BooleanField(default=False)
 
