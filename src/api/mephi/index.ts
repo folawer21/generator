@@ -12,6 +12,13 @@ export class MephiApiClass extends ApiCommon {
   public getGeneratedTests = <T = TGeneratedTests[]>(): TResponse<T> =>
     this.get<T>("http://127.0.0.1:8000/api/v1/get-generatedTests");
 
+  public generateTest = <T = TQuestion[]>(
+    data: { characteristics: string[] }
+  ): TResponse<T> =>
+    this.post<T, { characteristics: string[] }>( 
+      "http://127.0.0.1:8000/api/v1/get-generateTests", 
+      data
+    );
 }
 
 export const MephiApi = new MephiApiClass();

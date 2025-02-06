@@ -13,22 +13,24 @@ import { useEffect, useState } from "react";
 import { MephiApi } from "src/api/mephi";
 import { TQuestion } from "src/api/mephi/types";
 
-export const QuestionPage = (): JSX.Element => {
+interface QuestionPageProps {
+  questions: TQuestion[] | null; // Может быть null, если вопросы не переданы
+}
+
+export const QuestionPage = ({ questions }: QuestionPageProps): JSX.Element => {
   const [isLoading, setIsLoading] = useState(true);
-  const [questions, setQuestions] = useState<TQuestion[]>([]);
 
   useEffect(() => {
-    MephiApi.getQuestions()
-      .then((res) => setQuestions(res.data))
-      .catch(() => {
-        message.error("Ошибка при загрузке");
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
-  
+    if (questions === null) {
+      setIsLoading(true); // Если вопросы не переданы, показываем лоадер
+    } else {
+      setIsLoading(false); // Если вопросы переданы, скрываем лоадер
+    }
+  }, [questions]);
+
   const handleFinishTestClick = () => {
     console.log("Тест завершён");
-    // Добавьте здесь логику для завершения теста, например, отправка ответов или переход на другую страницу
+    // Логика для завершения теста, например, отправка ответов или переход на другую страницу
   };
 
   const renderContent = (): JSX.Element => {
@@ -74,6 +76,8 @@ export const QuestionPage = (): JSX.Element => {
                   height: 50,
                   display: "flex",
                   alignItems: "center",
+                  backgroundColor: '#1890ff',
+                  color: 'white',
                   fontWeight: 800
                 }}>
                 {item.id}. {item.text}
@@ -104,7 +108,7 @@ export const QuestionPage = (): JSX.Element => {
             </div>
           ))}
           <Row justify="center" style={{ marginTop: 30 }}>
-            <Button type="primary" onClick={handleFinishTestClick} style={{width: 300, height: 80}}>
+            <Button type="primary" onClick={handleFinishTestClick} style={{ width: 300, height: 80 }}>
               Закончить тест
             </Button>
           </Row>

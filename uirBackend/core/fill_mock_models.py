@@ -102,7 +102,11 @@
 
 
 from core.models import Test, Characteristic, Question, Answer, AnswerWeight, CombinedTest, CombinedTestQuestion
+from django.apps import apps
 
+for model in apps.get_models():
+    model.objects.all().delete()
+    print(f"Удалены все записи из модели {model.__name__}")
 # Создаем характеристики
 characteristics = {
     "Тип мышления": Characteristic.objects.create(name="Тип мышления"),

@@ -15,21 +15,26 @@ import {
 } from "antd";
 import { MephiApi } from "src/api/mephi";
 import { TCharacteristics } from "src/api/mephi/types";
+import { TQuestion } from "src/api/mephi/types"; 
 import { useNavigate } from "react-router-dom";
 import { clientRoutes } from "src/routes/client";
+import { QuestionPage } from "src/pages/Questions/Questions.tsx";  
 
 export const CharacteristicsPage = (): JSX.Element => {
   const [isLoading, setIsLoading] = useState(true);
   const [characteristics, setCharacteristics] = useState<TCharacteristics[]>([]);
-
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [testName, setTestName] = useState("");
   const [paramA, setParamA] = useState(0);
   const [paramB, setParamB] = useState(0);
+  const [selectedCharacteristics, setSelectedCharacteristics] = useState<string[]>([]);
+  const [questions, setQuestions] = useState<TQuestion[]>([]);
+  const [testGenerated, setTestGenerated] = useState(false); // Флаг для отслеживания успешной генерации теста
 
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Загружаем характеристики при монтировании компонента
     MephiApi.getCharacteristics()
       .then((res) => setCharacteristics(res.data))
       .catch(() => {
@@ -46,6 +51,15 @@ export const CharacteristicsPage = (): JSX.Element => {
           : characteristic
       )
     );
+
+    setSelectedCharacteristics((prevSelected) => {
+      if (checked) {
+        const characteristic = characteristics.find((c) => c.id === id);
+        return characteristic ? [...prevSelected, characteristic.name] : prevSelected;
+      } else {
+        return prevSelected.filter((name) => name !== characteristics.find((c) => c.id === id)?.name);
+      }
+    });
   };
 
   const showModal = () => {
@@ -53,9 +67,24 @@ export const CharacteristicsPage = (): JSX.Element => {
   };
 
   const handleOk = () => {
-    console.log("Тест сгенерирован!", testName, paramA, paramB);
-    setIsModalVisible(false);
-    navigate(clientRoutes.questions);
+    if (selectedCharacteristics.length === 0) {
+      message.error("Не выбраны характеристики для генерации теста.");
+      return;
+    }
+
+    // Генерируем тест на основе выбранных характеристик
+    MephiApi.generateTest({
+      characteristics: selectedCharacteristics,
+    })
+      .then((res) => {
+        console.log("Тест сгенерирован!", res);
+        setQuestions(res.data);  // Сохраняем полученные вопросы
+        setIsModalVisible(false);
+        setTestGenerated(true); // Устанавливаем флаг о том, что тест сгенерирован
+      })
+      .catch(() => {
+        message.error("Ошибка при генерации теста.");
+      });
   };
 
   const handleCancel = () => {
@@ -115,7 +144,8 @@ export const CharacteristicsPage = (): JSX.Element => {
         </Row>
       );
     }
-    if (characteristics) {
+
+    if (!testGenerated) {
       return (
         <>
           <Card
@@ -149,44 +179,35 @@ export const CharacteristicsPage = (): JSX.Element => {
       );
     } else {
       return (
-        <Result
-          title="Ошибка"
-          subTitle="Что-то пошло не так"
-          extra={<Button
-            type="primary">Вернуться домой</Button>}
-            />
-          );
-        }
-      };
-    
-      return (
-        <>
-          {renderContent()}
-    
-          <Modal
-            title="Параметры генерации"
-            visible={isModalVisible}
-            onOk={handleOk}
-            onCancel={handleCancel}
-          >
-            <Input
-              placeholder="Название теста"
-              value={testName}
-              onChange={(e) => setTestName(e.target.value)}
-              style={{ marginBottom: 20 }}
-            />
-    
-            <div style={{ marginBottom: 20 }}>
-              <label>Штраф за избыточность</label>
-              <Slider min={0} max={1} step={0.01} value={paramA} onChange={setParamA} />
-            </div>
-    
-            <div>
-              <label>Штраф за несбалансированность</label>
-              <Slider min={0} max={1} step={0.01} value={paramB} onChange={setParamB} />
-            </div>
-          </Modal>
-        </>
+        <QuestionPage questions={questions} /> // Строим экран с вопросами
       );
-    };
-    
+    }
+  };
+
+  return (
+    <>
+      {renderContent()}
+      <Modal
+        title="Параметры генерации"
+        visible={isModalVisible}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      >
+        <Input
+          placeholder="Название теста"
+          value={testName}
+          onChange={(e) => setTestName(e.target.value)}
+          style={{ marginBottom: 20 }}
+        />
+        <div style={{ marginBottom: 20 }}>
+          <label>Штраф за избыточность</label>
+          <Slider min={0} max={1} step={0.01} value={paramA} onChange={setParamA} />
+        </div>
+        <div>
+          <label>Штраф за несбалансированность</label>
+          <Slider min={0} max={1} step={0.01} value={paramB} onChange={setParamB} />
+        </div>
+      </Modal>
+    </>
+  );
+};
