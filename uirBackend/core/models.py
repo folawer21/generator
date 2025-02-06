@@ -8,6 +8,12 @@ class Test(models.Model):
     def __str__(self):
         return self.test_name
 
+class Characteristic(models.Model):
+    name = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.name
+
 class Question(models.Model):
     test = models.ForeignKey(Test, on_delete=models.CASCADE)
     question_text = models.TextField()
@@ -24,11 +30,12 @@ class Answer(models.Model):
 
 class AnswerWeight(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    trait = models.CharField(max_length=255)
+    trait = models.ForeignKey(Characteristic, on_delete=models.CASCADE)  # Изменили на ForeignKey
     weight = models.IntegerField()
 
     def __str__(self):
         return f"{self.trait}: {self.weight}"
+
 
 class CombinedTest(models.Model):
     combined_test_name = models.CharField(max_length=255)

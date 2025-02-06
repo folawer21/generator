@@ -2,7 +2,7 @@ import json
 from django.conf import settings
 import os
 
-from .models import Question, AnswerWeight, CombinedTest, CombinedTestQuestion
+from .models import Question, AnswerWeight, CombinedTest, CombinedTestQuestion, Characteristic, Answer
 
 def get_questions_by_characteristics(characteristics: list[str]) -> dict:
     """
@@ -22,13 +22,16 @@ def get_questions_by_characteristics(characteristics: list[str]) -> dict:
     return result
 
 
-def get_all_characteristics() -> list[str]:
+def get_all_characteristics():
     """
     Получает список всех уникальных характеристик из базы данных.
 
     :return: список характеристик (например, ["Тип мышления", "Общительность", "Доброжелательность"])
     """
-    return list(AnswerWeight.objects.values_list("trait", flat=True).distinct())
+    characteristics = Characteristic.objects.all()
+    return [{"id": characteristic.id, "name": characteristic.name} for characteristic in characteristics]
+
+
 
 import logging
 logger = logging.getLogger(__name__)
@@ -38,7 +41,6 @@ def get_all_generated_tests() -> list[dict]:
     """
     Получает все сгенерированные тесты с их ID, характеристиками и количеством вопросов.
     """
-    print("Запрос поступил!")
     tests = CombinedTest.objects.all()
 
     logger.debug("Запрос к базе данных: %s", tests)
@@ -55,3 +57,32 @@ def get_all_generated_tests() -> list[dict]:
 
     logger.debug("Результат: %s", result)
     return result
+
+
+
+def get_all_questions_with_answers():
+    # Получаем все вопросы и убираем повторяющиеся по тексту
+    questions = Question.objects.all()
+    
+    # Множество для хранения уникальных вопросов по тексту
+    seen_questions = set()
+    
+    formatted_questions = []
+    
+    for question in questions:
+        # Если вопрос с таким текстом еще не добавлен
+        if question.question_text not in seen_questions:
+            seen_questions.add(question.question_text)
+            
+            # Получаем все ответы для конкретного вопроса
+            answers = Answer.objects.filter(question=question)
+
+            # Формируем структуру данных для фронта
+            formatted_questions.append({
+                "id": question.id,
+                "text": question.question_text,
+                "answers": [{"text": answer.answer_text} for answer in answers]
+            })
+
+    return formatted_questions
+
