@@ -1,33 +1,47 @@
 from django.db import models
 
-class Answer(models.Model):
-    # Соответствует `export type answer = { id: number; text: string; };`
-    text = models.CharField(max_length=255)
-
-    def __str__(self):
-        return self.text
-
-class Question(models.Model):
-    # Соответствует `export type TQuestion = { id: number; text: string; answers: answer[]; };`
-    text = models.CharField(max_length=255)
-    answers = models.ManyToManyField(Answer, related_name='questions')
-
-    def __str__(self):
-        return self.text
-
-class Characteristic(models.Model):
-    name = models.CharField(max_length=255)
-    usage = models.BooleanField(default=False)
-
-    def __str__(self):
-        return self.name
-
-class GeneratedTest(models.Model):
-    # Соответствует `export type TGeneratedTests = { id: number; testName: string; charachteristicsList: string; questionCount: number };`
-    # Изменение - 'charachteristicsList' исправлено на 'characteristicsList'
+class Test(models.Model):
     test_name = models.CharField(max_length=255)
-    characteristics_list = models.TextField()  # здесь используется текст, но может быть преобразовано в JSON, если это необходимо
     question_count = models.IntegerField()
+    characteristics = models.TextField()
 
     def __str__(self):
         return self.test_name
+
+class Question(models.Model):
+    test = models.ForeignKey(Test, on_delete=models.CASCADE)
+    question_text = models.TextField()
+
+    def __str__(self):
+        return self.question_text
+
+class Answer(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    answer_text = models.TextField()
+
+    def __str__(self):
+        return self.answer_text
+
+class AnswerWeight(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    trait = models.CharField(max_length=255)
+    weight = models.IntegerField()
+
+    def __str__(self):
+        return f"{self.trait}: {self.weight}"
+
+class CombinedTest(models.Model):
+    combined_test_name = models.CharField(max_length=255)
+    characteristics = models.TextField()
+
+    def __str__(self):
+        return self.combined_test_name
+
+class CombinedTestQuestion(models.Model):
+    combined_test = models.ForeignKey(CombinedTest, on_delete=models.CASCADE)
+    original_test = models.ForeignKey(Test, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return f"{self.combined_test} - {self.question}"
+
