@@ -1,8 +1,8 @@
 import json
 from django.conf import settings
 import os
-
-from .models import Question, AnswerWeight, CombinedTest, CombinedTestQuestion, Characteristic, Answer
+from collections import defaultdict
+from .models import Question, AnswerWeight, CombinedTest, CombinedTestQuestion, Characteristic, Answer, Test
 
 generated_test = []
 
@@ -23,15 +23,36 @@ def get_questions_by_characteristics(characteristics: list[str]) -> dict:
 
     return result
 
-
 def get_all_characteristics():
     """
-    Получает список всех уникальных характеристик из базы данных.
+    Получает список всех уникальных характеристик из базы данных, объединяя характеристики для каждого теста в одну строку.
 
-    :return: список характеристик (например, ["Тип мышления", "Общительность", "Доброжелательность"])
+    :return: список характеристик с объединенными характеристиками для каждого теста
     """
-    characteristics = Characteristic.objects.all()
-    return [{"id": characteristic.id, "name": characteristic.name} for characteristic in characteristics]
+    # Получаем все тесты и их характеристики
+    tests = Test.objects.all()
+    test_characteristics = defaultdict(list)
+
+    # Группируем характеристики по тестам
+    for test in tests:
+        for question in test.question_set.all():
+            for answer_weight in question.answerweight_set.all():
+                # Добавляем характеристику для каждого теста
+                characteristic = answer_weight.trait
+                if characteristic.name not in test_characteristics[test.id]:
+                    test_characteristics[test.id].append(characteristic.name)
+
+    # Формируем результат
+    result = []
+    for test_id, characteristics in test_characteristics.items():
+        # Объединяем характеристики в одну строку с разделителем '/'
+        combined_characteristics = ", ".join(characteristics)
+        result.append({
+            "id": test_id,
+            "name": combined_characteristics
+        })
+    print(result)
+    return result
 
 
 
