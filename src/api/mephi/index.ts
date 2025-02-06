@@ -26,6 +26,13 @@ export class MephiApiClass extends ApiCommon {
     this.post<T, { id: number }>("http://127.0.0.1:8000/api/v1/delete-combinedTest", {
       id,
     });
+
+    public getCombinedTestQuestions = <T = TQuestion[]>(
+      id: number
+    ): TResponse<T> =>
+      this.post<T, { id: number }>("http://127.0.0.1:8000/api/v1/get-combined-test", {
+        id,
+      });
 }
 
 export const MephiApi = new MephiApiClass();

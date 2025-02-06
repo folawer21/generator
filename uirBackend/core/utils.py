@@ -1,6 +1,7 @@
 import json
 from django.conf import settings
 import os
+import random
 from collections import defaultdict
 from .models import Question, AnswerWeight, CombinedTest, CombinedTestQuestion, Characteristic, Answer, Test
 from django.http import JsonResponse
@@ -176,7 +177,7 @@ def get_unique_questions_with_answers(characteristics_list):
 
     # Преобразуем словарь в список уникальных вопросов
     questions_list = list(unique_questions.values())
-
+    random.shuffle(questions_list)
     return questions_list, original_tests
 
 def save_combined_test_to_db(generated_test_name, characteristics_list, questions_list, original_tests):
@@ -213,38 +214,6 @@ def generate_test_by_characteristic(characteristics_list,test_name = "Новый
 
     return test
 
-
-# @csrf_exempt  # Отключает CSRF-защиту для тестирования, удалите это в продакшене
-# def delete_combined_test_by_id(request):
-#     """
-#     Удаляет комбинированный тест по ID, полученному из JSON-запроса.
-#     """
-#     if request.method != 'POST':
-#         return JsonResponse({'status': 'error', 'message': 'Метод не разрешен'}, status=405)
-
-#     try:
-#         data = json.loads(request.body)
-#         print(data)
-#         test_id = data.get('id')  # ID теста передается в теле запроса
-#         if not test_id:
-#             return JsonResponse({'status': 'error', 'message': 'ID теста не передан'}, status=400)
-
-#         # Получаем комбинированный тест по ID
-#         combined_test = get_object_or_404(CombinedTest, id=test_id)
-        
-#         # Удаляем все связанные вопросы
-#         CombinedTestQuestion.objects.filter(combined_test=combined_test).delete()
-        
-#         # Удаляем сам комбинированный тест
-#         combined_test.delete()
-        
-#         return JsonResponse({'status': 'success', 'message': 'Тест успешно удален'})
-    
-#     except json.JSONDecodeError:
-#         return JsonResponse({'status': 'error', 'message': 'Некорректный JSON'}, status=400)
-    
-#     except CombinedTest.DoesNotExist:
-#         return JsonResponse({'status': 'error', 'message': 'Комбинированный тест не найден'}, status=404)
 @csrf_exempt
 def delete_combined_test_by_id(test_id):
     """
@@ -256,3 +225,26 @@ def delete_combined_test_by_id(test_id):
     combined_test = get_object_or_404(CombinedTest, id=test_id)
     combined_test.delete()
     return JsonResponse({"message": "Тест успешно удалён"}, status=200)
+
+
+def get_combined_test_questions(combined_test_id):
+    """
+    Получает список всех вопросов и ответов для указанного комбинированного теста.
+
+    :param combined_test_id: ID комбинированного теста
+    :return: JsonResponse с вопросами и ответами
+    """
+    questions = CombinedTestQuestion.objects.filter(combined_test_id=combined_test_id)
+
+    result = []
+    for entry in questions:
+        question = entry.question
+        answers = Answer.objects.filter(question=question)
+
+        result.append({
+            "id": question.id,
+            "text": question.question_text,
+            "answers": [{"id": answer.id, "text": answer.answer_text} for answer in answers]
+        })
+
+    return result
