@@ -24,11 +24,15 @@ def generate_test(request):
             
             # Извлекаем список характеристик
             characteristics = data.get("characteristics", [])
+            name = data.get("test_name")
             
             if characteristics:
+                if name:
+                    return JsonResponse(generate_test_by_characteristic(characteristics,name), safe=False)
                 return JsonResponse(generate_test_by_characteristic(characteristics), safe=False)
+                
             else:
-                return JsonResponse({"error": "Характеристики не переданы"}, status=400)
+                return JsonResponse({"error": "Характеристики ил не переданы"}, status=400)
         except json.JSONDecodeError:
             return JsonResponse({"error": "Неверный формат данных"}, status=400)
     else:

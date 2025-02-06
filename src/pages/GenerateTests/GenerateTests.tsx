@@ -71,10 +71,16 @@ export const CharacteristicsPage = (): JSX.Element => {
       message.error("Не выбраны характеристики для генерации теста.");
       return;
     }
-
-    // Генерируем тест на основе выбранных характеристик
+  
+    if (!testName.trim()) {
+      message.error("Введите название теста.");
+      return;
+    }
+  
+    // Генерируем тест на основе выбранных характеристик и названия
     MephiApi.generateTest({
       characteristics: selectedCharacteristics,
+      test_name: testName, // Теперь передаем название теста
     })
       .then((res) => {
         console.log("Тест сгенерирован!", res);
@@ -86,6 +92,7 @@ export const CharacteristicsPage = (): JSX.Element => {
         message.error("Ошибка при генерации теста.");
       });
   };
+  
 
   const handleCancel = () => {
     setIsModalVisible(false);
