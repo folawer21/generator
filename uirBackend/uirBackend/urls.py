@@ -18,7 +18,6 @@ from core import views
 
 urlpatterns = [
     path('api/v1/get-questions', views.get_questions, name='question_list'),
-    # path('api/v1/answers', views.answer_list, name='answer_list'),
     path('api/v1/get-characteristics', views.get_characteristics, name='characteristic_list'),
     path('api/v1/get-generatedTests', views.get_generated_tests, name='generated_test_list'),
 ]

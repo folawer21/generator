@@ -1,9 +1,9 @@
-from models import Test
-from models import Question
-from models import Answer
-from models import AnswerWeight
-from models import CombinedTest
-from models import CombinedTestQuestion
+from .models import Test
+from .models import Question
+from .models import Answer
+from .models import AnswerWeight
+from .models import CombinedTest
+from .models import CombinedTestQuestion
 
 tests = [
     Test(test_name="Опросник Смирнова", question_count=5, characteristics="Тип мышления, Общительность"),
