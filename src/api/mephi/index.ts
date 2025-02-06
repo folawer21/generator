@@ -19,6 +19,13 @@ export class MephiApiClass extends ApiCommon {
       "http://127.0.0.1:8000/api/v1/get-generateTests", 
       data
     );
+
+  public deleteCombinedTest = <T = { status: string; message: string }>(
+    id: number
+  ): TResponse<T> =>
+    this.post<T, { id: number }>("http://127.0.0.1:8000/api/v1/delete-combinedTest", {
+      id,
+    });
 }
 
 export const MephiApi = new MephiApiClass();

@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.conf import settings
 import os
 from django.views.decorators.csrf import csrf_exempt  # для отключения CSRF для POST-запросов
-from .utils import get_all_generated_tests, get_all_characteristics, get_all_questions_with_answers, get_unique_questions_with_answers,generate_test_by_characteristic
+from .utils import get_all_generated_tests, get_all_characteristics, get_all_questions_with_answers, generate_test_by_characteristic, delete_combined_test_by_id
 # Получите путь к файлу с моковыми данными
 mock_data_path = os.path.join(settings.BASE_DIR, 'core', 'mock_data.json')
 
@@ -40,3 +40,28 @@ def get_characteristics(request):
 
 def get_generated_tests(request):
     return JsonResponse(get_all_generated_tests(), safe=False)
+
+@csrf_exempt  # Отключает CSRF-защиту для тестирования, удалите это в продакшене
+def delete_combined_test(request):
+    """
+    Удаляет комбинированный тест по ID, полученному из JSON-запроса.
+    """
+    print(11111)
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Метод не разрешен'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        test_id = data.get('id')  # ID теста передается в теле запроса
+        if not test_id:
+            return JsonResponse({'status': 'error', 'message': 'ID теста не передан'}, status=400)
+
+        delete_combined_test_by_id(test_id)
+        return JsonResponse({'status': 'success', 'message': 'Тест успешно удален'})
+    
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Некорректный JSON'}, status=400)
+    
+    except CombinedTest.DoesNotExist:
+        print(data)
+        return JsonResponse({'status': 'error', 'message': 'Комбинированный тест не найден'}, status=404)
