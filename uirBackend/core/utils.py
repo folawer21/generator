@@ -51,7 +51,6 @@ def get_all_characteristics():
             "id": test_id,
             "name": combined_characteristics
         })
-    print(result)
     return result
 
 
@@ -117,6 +116,7 @@ def get_tests_by_characteristics(characteristics_list):
     """
     # Словарь, который будет хранить результаты по каждой характеристике
     characteristics_questions = {}
+    original_tests = set()
 
     # Перебираем все характеристики, которые переданы на backend
     for characteristic_name in characteristics_list:
@@ -130,7 +130,7 @@ def get_tests_by_characteristics(characteristics_list):
             question = answer_weight.question
             # Добавляем вопросы в множество, чтобы исключить дубли
             unique_questions.add(question)
-
+            original_tests.add(question.test)
         # Для каждой характеристики выбираем только один вопрос (например, первый)
         if unique_questions:
             characteristics_questions[characteristic_name] = [{
@@ -138,7 +138,7 @@ def get_tests_by_characteristics(characteristics_list):
                 "text": question.question_text
             } for question in unique_questions]
 
-    return characteristics_questions
+    return characteristics_questions, original_tests
 
 def get_unique_questions_with_answers(characteristics_list):
     """
@@ -146,7 +146,7 @@ def get_unique_questions_with_answers(characteristics_list):
     убирает дубликаты и добавляет ответы к каждому вопросу.
     """
     # Получаем вопросы по характеристикам
-    characteristics_questions = get_tests_by_characteristics(characteristics_list)
+    characteristics_questions, original_tests = get_tests_by_characteristics(characteristics_list)
 
     # Используем словарь, чтобы избежать дублирования вопросов
     unique_questions = {}
@@ -173,12 +173,39 @@ def get_unique_questions_with_answers(characteristics_list):
     # Преобразуем словарь в список уникальных вопросов
     questions_list = list(unique_questions.values())
 
-    print(f"Данные успешно получены. Количество уникальных вопросов: {questions_list}")
+    return questions_list, original_tests
 
-    return questions_list
+def save_combined_test_to_db(generated_test_name, characteristics_list, questions_list, original_tests):
+    """
+    Сохраняет комбинированный тест в базу данных, добавляет вопросы с привязкой к исходным тестам.
+    """
+    # Создаем комбинированный тест
+    combined_test = CombinedTest.objects.create(
+        combined_test_name=generated_test_name,
+        characteristics=" / ".join(characteristics_list)  # Соединяем характеристики в строку
+    )
 
-def generate_test_by_characteristic(characteristics_list):
-    test = get_unique_questions_with_answers(characteristics_list)
-    generated_test = test
+    # Добавляем вопросы в комбинированный тест
+    for question_data in questions_list:
+        # Ищем вопрос в базе данных
+        question = Question.objects.get(id=question_data["id"])
+
+        # Сохраняем связь с оригинальными тестами
+        original_test = next(test for test in original_tests if test.test_name == question.test.test_name)
+
+        # Создаем запись в CombinedTestQuestion
+        CombinedTestQuestion.objects.create(
+            combined_test=combined_test,
+            original_test=original_test,
+            question=question
+        )
+
+    return combined_test
+
+
+def generate_test_by_characteristic(characteristics_list,test_name = "Новый тест"):
+    test, original_tests = get_unique_questions_with_answers(characteristics_list)
+    save_combined_test_to_db(test_name,characteristics_list,test,original_tests)
+
     return test
 
