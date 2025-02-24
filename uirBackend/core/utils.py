@@ -178,7 +178,7 @@ def get_unique_questions_with_answers(characteristics_list):
     # Преобразуем словарь в список уникальных вопросов
     questions_list = list(unique_questions.values())
     random.shuffle(questions_list)
-    return questions_list, original_tests
+    return questions_list[:-5], original_tests
 
 def save_combined_test_to_db(generated_test_name, characteristics_list, questions_list, original_tests):
     """
@@ -207,11 +207,12 @@ def save_combined_test_to_db(generated_test_name, characteristics_list, question
 
     return combined_test
 
+import time
 
 def generate_test_by_characteristic(characteristics_list,test_name = "Новый тест"):
     test, original_tests = get_unique_questions_with_answers(characteristics_list)
     save_combined_test_to_db(test_name,characteristics_list,test,original_tests)
-
+    time.sleep(2.5)
     return test
 
 @csrf_exempt
@@ -247,4 +248,4 @@ def get_combined_test_questions(combined_test_id):
             "answers": [{"id": answer.id, "text": answer.answer_text} for answer in answers]
         })
 
-    return result
+    return result[:-5]
