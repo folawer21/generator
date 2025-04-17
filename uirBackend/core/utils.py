@@ -119,6 +119,13 @@ def get_tests_by_characteristics(characteristics_list):
     Получает список тестов, которые выявляют переданные характеристики, 
     выбирает уникальные вопросы для каждой характеристики и возвращает результат в виде JSON-структуры.
     """
+    # Разворачиваем вложенные строки с запятыми в отдельные элементы
+    expanded_characteristics = []
+    for characteristic in characteristics_list:
+        expanded_characteristics.extend([char.strip() for char in characteristic.split(",")])
+
+    characteristics_list = expanded_characteristics
+
     # Словарь, который будет хранить результаты по каждой характеристике
     characteristics_questions = {}
     original_tests = set()
@@ -144,6 +151,7 @@ def get_tests_by_characteristics(characteristics_list):
             } for question in unique_questions]
 
     return characteristics_questions, original_tests
+
 
 def get_unique_questions_with_answers(characteristics_list):
     """
@@ -249,3 +257,78 @@ def get_combined_test_questions(combined_test_id):
         })
 
     return result[:-5]
+
+from .models import Student
+from collections import defaultdict
+
+
+def get_all_groups_with_students() -> dict[str, list[dict]]:
+    """
+    Возвращает словарь, где ключ — название группы, 
+    а значение — список студентов в формате { id, fullName }.
+    """
+    students = Student.objects.all()
+    groups = defaultdict(list)
+
+    for student in students:
+        groups[student.group.name].append({  # Используем student.group.name для ключа
+            "id": student.id,
+            "full_name": student.full_name
+        })
+
+    return dict(groups)
+
+
+from .models import PsychologicalPortrait
+
+
+def get_student_psychological_portrait(student_id: int) -> dict:
+    """
+    Возвращает психологический портрет студента с указанным ID.
+    Включает темперамент, репрезентативную систему, рекомендации и черты личности.
+    """
+    try:
+        portrait = PsychologicalPortrait.objects.select_related(
+            "student", "temperament", "representational_system"
+        ).prefetch_related("traits").get(student__id=student_id)
+
+        return {
+            "studentId": student_id,
+            "fullName": portrait.student.full_name,
+            "group": portrait.student.group.name,
+            "temperament": portrait.temperament.temperament_type if portrait.temperament else None,
+            "representationalSystem": portrait.representational_system.system_type if portrait.representational_system else None,
+            "recommendations": portrait.recommendations,
+            "traits": [
+                {
+                    "trait": t.trait_name,
+                    "value": t.trait_value
+                }
+                for t in portrait.traits.all()
+            ]
+        }
+
+    except PsychologicalPortrait.DoesNotExist:
+        return {"error": "Психологический портрет не найден"}
+@csrf_exempt
+def submit_test_results(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+
+            full_name = data.get("fullName")
+            group_name = data.get("group")
+            answers = data.get("answers")
+
+            print(f"ФИО: {full_name}")
+            print(f"Группа: {group_name}")
+            print("Ответы:")
+            for question_id, answer_id in answers.items():
+                print(f"Вопрос {question_id}: Ответ {answer_id}")
+
+            return JsonResponse({"status": "ok"})
+
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=500)
+
+    return JsonResponse({"error": "Только POST-запросы разрешены"}, status=405)

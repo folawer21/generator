@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.conf import settings
 import os
 from django.views.decorators.csrf import csrf_exempt  # для отключения CSRF для POST-запросов
-from .utils import get_all_generated_tests, get_all_characteristics, get_all_questions_with_answers, generate_test_by_characteristic, delete_combined_test_by_id, get_combined_test_questions
+from .utils import get_all_generated_tests, get_all_characteristics, get_all_questions_with_answers, generate_test_by_characteristic, delete_combined_test_by_id, get_combined_test_questions, get_all_groups_with_students, get_student_psychological_portrait, submit_test_results
 # Получите путь к файлу с моковыми данными
 mock_data_path = os.path.join(settings.BASE_DIR, 'core', 'mock_data.json')
 
@@ -95,3 +95,29 @@ def get_combined_test(request):
             return JsonResponse([], status=500)
     else:
         return JsonResponse([], status=405)
+
+def get_characteristics(request):
+    return JsonResponse(get_all_characteristics(), safe=False)
+
+
+def get_generated_tests(request):
+    return JsonResponse(get_all_generated_tests(), safe=False)
+
+
+def get_groups_with_students(request):
+    """
+    Возвращает список групп с вложенными списками студентов.
+    """
+    return JsonResponse(get_all_groups_with_students(), safe=False)
+
+
+def get_psychological_portrait(request, student_id):
+    """
+    Возвращает психологический портрет конкретного студента по его ID.
+    """
+    return JsonResponse(get_student_psychological_portrait(student_id), safe=False)
+
+@csrf_exempt
+def submit_results_from_test(request):
+    return submit_test_results(request)
+

@@ -35,7 +35,6 @@ export class AxiosService {
           data: error.response.data,
         });
     
-        // Убедитесь, что обрабатываете случаи, когда `error.response` может отсутствовать
         if (error.response && error.response.data && error.response.data.detail) {
           return Promise.reject(error.response.data.detail);
         }

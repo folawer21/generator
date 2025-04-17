@@ -193,5 +193,3 @@
 #     CombinedTestQuestion(combined_test=combined_tests[0], original_test=tests[1], question=questions[3]),
 #     CombinedTestQuestion(combined_test=combined_tests[0], original_test=tests[2], question=questions[5]),
 # ]
-
-# CombinedTestQuestion.objects.bulk_create(combined_test_questions)
