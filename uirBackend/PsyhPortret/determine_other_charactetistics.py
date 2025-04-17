@@ -1,4 +1,5 @@
-from adjust_scales import adjust_scale_values
+from .adjust_scales import adjust_scale_values
+
 def group_questions_by_trait(tests):
     """
     Группировка вопросов по психологическим характеристикам.

@@ -7,6 +7,7 @@ from .models import Question, AnswerWeight, CombinedTest, CombinedTestQuestion, 
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
+from PsyhPortret.build_portret import process_answers
 
 
 generated_test = []
@@ -325,6 +326,8 @@ def submit_test_results(request):
             print("Ответы:")
             for question_id, answer_id in answers.items():
                 print(f"Вопрос {question_id}: Ответ {answer_id}")
+
+            process_answers(full_name=full_name, group_name= group_name, answers= answers)
 
             return JsonResponse({"status": "ok"})
 

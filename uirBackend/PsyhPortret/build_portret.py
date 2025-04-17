@@ -1,8 +1,9 @@
-from determine_temp import process_temp_test
-from determine_reps_system import  process_rep_system_test
-from determine_other_characteristics import determine_dominant_trait, process_other_tests
-from preffered_tasks import get_tasks_by_traits
+from .determine_temp import process_temp_test
+from .determine_reps_system import  process_rep_system_test
+from .determine_other_charactetistics import determine_dominant_trait, process_other_tests
+from .preffered_tasks import get_tasks_by_traits
 import json
+from core.models import *
 
 def pretty_print_portrait(portrait):
     # Добавляем смайлик для Темперамента
@@ -63,15 +64,12 @@ def process_psychological_test(tests, responses, tasks):
 
     print("\n📝 Окончательный психологический портрет:")
     pretty_print_portrait(final_portrait)
-    save_portrait_to_json(final_portrait)
-    save_portrait_to_db(final_portrait=final_portrait)
     return final_portrait
 
 from core.models import (
-    Temperament, RepresentationalSystem, PersonalityTrait,
+    Temperament, RepresentationalSystem,
     LearningRecommendation, Student, Group
 )
-
 def save_portrait_to_db(final_portrait: dict, student_id: int = 0):
     # Попробуем найти студента, если нет — создадим
     try:
@@ -84,24 +82,24 @@ def save_portrait_to_db(final_portrait: dict, student_id: int = 0):
         
         # Создаём студента
         student = Student.objects.create(
-            id=student_id,  # задать вручную ID можно только если это разрешено
+            id=student_id,
             full_name=f"Студент {student_id}",
             group=group
         )
 
-    # Темперамент
-    Temperament.objects.create(
+    # Создаем психологический портрет
+    portrait = PsychologicalPortrait.objects.create(
         student=student,
-        temperament_type=final_portrait.get("Темперамент", "Неизвестно")
+        temperament=Temperament.objects.create(
+            temperament_type=final_portrait.get("Темперамент", "Неизвестно")
+        ),
+        representational_system=RepresentationalSystem.objects.create(
+            system_type=final_portrait.get("Репрезентативная система личности", "Неизвестно")
+        ),
+        recommendations="\n".join(final_portrait.get("Подходящие обучающие воздействия", []))
     )
 
-    # Репрезентативная система
-    RepresentationalSystem.objects.create(
-        student=student,
-        system_type=final_portrait.get("Репрезентативная система личности", "Неизвестно")
-    )
-
-    # Черты личности
+    # Сохраняем черты личности
     traits = final_portrait.get("Остальные характеристики", {}).get("Доминирующие черты", [])
     for trait in traits:
         if isinstance(trait, str) and ":" in trait:
@@ -110,19 +108,21 @@ def save_portrait_to_db(final_portrait: dict, student_id: int = 0):
             trait_name = "Характеристика"
             trait_value = trait if isinstance(trait, str) else str(trait)
 
-        PersonalityTrait.objects.create(
-            student=student,
+        # Создаем черту личности для психологического портрета
+        PsychProfileTrait.objects.create(
+            portrait=portrait,
             trait_name=trait_name,
             trait_value=trait_value
         )
 
-    # Обучающие рекомендации
-    recommendations = final_portrait.get("Подходящие обучающие воздействия", [])
-    for rec in recommendations:
-        LearningRecommendation.objects.create(
-            student=student,
-            recommendation_text=rec
-        )
-
     print(f"✅ Психологический портрет для студента {student.full_name} сохранён в базе.")
 
+def process_answers(full_name, group_name, answers):
+    group, _ = Group.objects.get_or_create(name=group_name)
+    student, _ = Student.objects.get_or_create(full_name=full_name, group=group)
+    tests = list(Test.objects.all())
+    tasks = list(LearningRecommendation.objects.all())  
+    responses = {int(qid): aid for qid, aid in answers.items()}
+    final_portret = process_psychological_test(tests= tests, tasks= tasks, responses= responses)
+    student = Student.objects.create(full_name=full_name, group_name=group_name)
+    save_portrait_to_db(final_portret, student.id)
