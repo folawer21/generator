@@ -172,7 +172,191 @@
 #         "dominant_traits": only_dominant_traits
 #     }
 
+
+
+
+
+
+
+
+#!#$!@$!#$!#$!#$!#$!#$!#$!#$!#$!#$!#$!#$!#$!#$#!#$#$#!$!#!##$!$
+# from .adjust_scales import adjust_scale_values
+
+# def group_questions_by_trait(tests):
+#     """
+#     Группировка вопросов по психологическим характеристикам.
+#     """
+#     trait_questions = {}
+
+#     print("🔍 Группируем вопросы по психологическим характеристикам...")
+
+#     for test in tests:
+#         for question in test.questions.all():  # Вместо test["questions"]
+#             for trait in question.get_traits():  # Используем get_traits()
+#                 if trait not in trait_questions:
+#                     trait_questions[trait] = []
+#                 trait_questions[trait].append(question)
+
+#     print(f"📝 Группировано {len(trait_questions)} характеристик.")
+#     return trait_questions
+
+# from core.models import AnswerWeight 
+
+# def process_user_responses(tests, trait_questions, responses):
+#     """
+#     Обрабатывает ответы пользователя и подсчитывает баллы по характеристикам.
+#     """
+#     print(f"responses: {responses}")
+
+#     print("📊 Подсчет баллов по характеристикам...")
+#     scores = {trait: 0 for trait in trait_questions}
+
+#     for trait, questions in trait_questions.items():
+#         for question in questions:
+#             print(f"\n🟨 Обрабатывается вопрос {question.id} (тема: {trait})")
+#             # ID ответа приходит как строка — приводим к int
+#             user_answer_id = responses.get(str(question.id)) or responses.get(question.id)
+#             print(f"🔹 ID ответа пользователя: {user_answer_id}")
+
+#             if user_answer_id:
+#                 for answer in question.answers.all():
+#                     print(f"🔸 Проверка: {answer.answer_text} (ID: {answer.id})")
+#                     if str(answer.id) == str(user_answer_id):  # Сравнение по ID
+#                         print(f"✅ Найден совпадающий ответ: {answer.answer_text}")
+#                         try:
+#                             weight = AnswerWeight.objects.get(answer=answer, trait__name=trait).weight
+#                         except AnswerWeight.DoesNotExist:
+#                             print(f"⚠️ Нет веса для ответа {answer.id} и черты {trait}")
+#                             weight = 0
+#                         scores[trait] += weight
+#                         break
+
+#     print(f"📈 Результаты: {scores}")
+#     return scores
+
+# def adjust_scores_for_number_of_questions(scores, trait_questions):
+#     """
+#     Корректирует баллы с учетом количества вопросов.
+#     """
+#     print("🔧 Корректировка баллов по количеству вопросов...")
+#     adjusted = {}
+
+#     for trait, raw_score in scores.items():
+#         total_q = len(trait_questions[trait])
+#         answered_q = sum(1 for q in trait_questions[trait] if q.id in scores)  # Используем q.id вместо q["question_id"]
+#         adjusted[trait] = raw_score * total_q / answered_q if answered_q else raw_score
+#         print(f"📊 '{trait}': скорректировано до {adjusted[trait]:.2f}")
+
+#     return adjusted
+
+
+
+# def limit_score_range(scores, min_score=0, max_score=100):
+#     """
+#     Ограничивает значения баллов в пределах заданной шкалы.
+#     """
+#     print("⚖️ Ограничение баллов по шкале...")
+#     return {
+#         trait: max(min(score, max_score), min_score)
+#         for trait, score in scores.items()
+#     }
+
+
+# def interpret_scores(scores, tests):
+#     """
+#     Интерпретирует баллы на основе заданных шкал.
+#     """
+#     print("🔍 Интерпретация результатов...")
+#     interpretations = {}
+
+#     # Получаем шкалы из тестов
+#     scales = []
+#     for test in tests:
+#         scales.extend(test.scales.all())  # Получаем все шкалы, связанные с тестом
+
+#     for trait, score in scores.items():
+#         # Ищем шкалу по имени характеристики (trait)
+#         scale = next((s for s in scales if s.trait == trait), None)
+
+#         if scale:
+#             min_s, max_s = scale.min_score, scale.max_score  # Получаем min и max для шкалы
+#             result = f"'{trait}': {score:.2f} (шкала: {min_s}-{max_s})"
+#         else:
+#             result = f"Нет интерпретации для '{trait}'"
+#         interpretations[trait] = result
+#         print(f"📋 {result}")
+
+#     return interpretations
+
+
+
+# def determine_dominant_trait(scores, trait_pairs):
+#     """
+#     Определяет доминирующую черту в каждой паре противоположных характеристик.
+#     """
+#     dominant = {}
+#     for trait1, trait2 in trait_pairs:
+#         s1, s2 = scores.get(trait1, 0), scores.get(trait2, 0)
+#         if s1 > s2:
+#             dominant[trait1], dominant[trait2] = "Доминирует", "Не доминирует"
+#         elif s2 > s1:
+#             dominant[trait2], dominant[trait1] = "Доминирует", "Не доминирует"
+#         else:
+#             dominant[trait1] = dominant[trait2] = "Не доминирует"
+#     return dominant
+
+
+# def filter_dominant_traits(all_traits):
+#     """
+#     Возвращает только доминирующие черты.
+#     """
+#     return [trait for trait, status in all_traits.items() if status == "Доминирует"]
+
+
+# def process_other_tests(tests, responses):
+#     """
+#     Обрабатывает все тесты, кроме темперамента и представлений.
+#     """
+#     print("🛠️ Обработка дополнительных тестов...")
+#     try:
+#         excluded_traits = {"Сангвиник", "Холерик", "Меланхолик", "Флегматик", "Визуал", "Аудитив", "Кинестетик"}
+#         excluded_test_ids = {"temperament_test", "representative_system_test"}
+
+#         filtered_tests = [t for t in tests if t.id not in excluded_test_ids] 
+#         trait_questions = group_questions_by_trait(filtered_tests)
+#         trait_questions = {trait: q for trait, q in trait_questions.items() if trait not in excluded_traits}
+
+#         scores = process_user_responses(filtered_tests, trait_questions, responses)
+
+#         trait_pairs = [
+#             ("Интроверсия", "Экстраверсия"),
+#             ("Устойчивость", "Возбудимость"),
+#             ("Активность", "Пассивность"),
+#             ("Ригидность", "Гибкость"),
+#             ("Быстрая реакция", "Медленная реакция")
+#         ]
+#         dominant_traits = determine_dominant_trait(scores, trait_pairs)
+#         print(f"dominant_traits: {dominant_traits}")
+#         only_dominant = filter_dominant_traits(dominant_traits)
+#         print(f"only_dominant_traits: {only_dominant}")
+
+
+#         adjusted = adjust_scores_for_number_of_questions(scores, trait_questions)
+#         limited = limit_score_range(adjusted)
+#         # interpreted_scales = interpret_scores(limited, adjust_scale_values(filtered_tests))
+
+#         return {
+#             "scores": limited,
+#             # "interpretations": interpreted_scales,
+#             "dominant_traits": only_dominant
+#         }
+#     except Exception as e:
+#         print(e)
+#         return 
+
+
 from .adjust_scales import adjust_scale_values
+from core.models import AnswerWeight
 
 def group_questions_by_trait(tests):
     """
@@ -183,48 +367,50 @@ def group_questions_by_trait(tests):
     print("🔍 Группируем вопросы по психологическим характеристикам...")
 
     for test in tests:
-        for question in test.questions.all():  # Вместо test["questions"]
-            for trait in question.get_traits():  # Используем get_traits()
-                if trait not in trait_questions:
-                    trait_questions[trait] = []
-                trait_questions[trait].append(question)
+        for question in test.questions.all():
+            for trait in question.get_traits():
+                trait_name = trait.name.strip()  # Нормализуем имя
+                if trait_name not in trait_questions:
+                    trait_questions[trait_name] = []
+                trait_questions[trait_name].append(question)
 
     print(f"📝 Группировано {len(trait_questions)} характеристик.")
     return trait_questions
 
-from core.models import AnswerWeight 
 
 def process_user_responses(tests, trait_questions, responses):
     """
     Обрабатывает ответы пользователя и подсчитывает баллы по характеристикам.
     """
     print(f"responses: {responses}")
-
     print("📊 Подсчет баллов по характеристикам...")
+
     scores = {trait: 0 for trait in trait_questions}
 
     for trait, questions in trait_questions.items():
         for question in questions:
             print(f"\n🟨 Обрабатывается вопрос {question.id} (тема: {trait})")
-            # ID ответа приходит как строка — приводим к int
             user_answer_id = responses.get(str(question.id)) or responses.get(question.id)
             print(f"🔹 ID ответа пользователя: {user_answer_id}")
 
             if user_answer_id:
                 for answer in question.answers.all():
                     print(f"🔸 Проверка: {answer.answer_text} (ID: {answer.id})")
-                    if str(answer.id) == str(user_answer_id):  # Сравнение по ID
+                    if str(answer.id) == str(user_answer_id):
                         print(f"✅ Найден совпадающий ответ: {answer.answer_text}")
                         try:
-                            weight = AnswerWeight.objects.get(answer=answer, trait__name=trait).weight
+                            answer_weight = AnswerWeight.objects.get(answer=answer, trait__name=trait)
+                            weight = answer_weight.weight
+                            print(f"✅ Вес ответа {answer.id} для черты '{trait}': {weight}")
                         except AnswerWeight.DoesNotExist:
-                            print(f"⚠️ Нет веса для ответа {answer.id} и черты {trait}")
+                            print(f"⚠️ Нет веса для ответа {answer.id} и черты '{trait}'")
                             weight = 0
                         scores[trait] += weight
                         break
 
     print(f"📈 Результаты: {scores}")
     return scores
+
 
 def adjust_scores_for_number_of_questions(scores, trait_questions):
     """
@@ -235,12 +421,11 @@ def adjust_scores_for_number_of_questions(scores, trait_questions):
 
     for trait, raw_score in scores.items():
         total_q = len(trait_questions[trait])
-        answered_q = sum(1 for q in trait_questions[trait] if q.id in scores)  # Используем q.id вместо q["question_id"]
+        answered_q = sum(1 for q in trait_questions[trait] if str(q.id) in scores)
         adjusted[trait] = raw_score * total_q / answered_q if answered_q else raw_score
         print(f"📊 '{trait}': скорректировано до {adjusted[trait]:.2f}")
 
     return adjusted
-
 
 
 def limit_score_range(scores, min_score=0, max_score=100):
@@ -261,17 +446,14 @@ def interpret_scores(scores, tests):
     print("🔍 Интерпретация результатов...")
     interpretations = {}
 
-    # Получаем шкалы из тестов
     scales = []
     for test in tests:
-        scales.extend(test.scales.all())  # Получаем все шкалы, связанные с тестом
+        scales.extend(test.scales.all())
 
     for trait, score in scores.items():
-        # Ищем шкалу по имени характеристики (trait)
-        scale = next((s for s in scales if s.trait == trait), None)
-
+        scale = next((s for s in scales if s.trait.name.strip() == trait), None)
         if scale:
-            min_s, max_s = scale.min_score, scale.max_score  # Получаем min и max для шкалы
+            min_s, max_s = scale.min_score, scale.max_score
             result = f"'{trait}': {score:.2f} (шкала: {min_s}-{max_s})"
         else:
             result = f"Нет интерпретации для '{trait}'"
@@ -281,20 +463,28 @@ def interpret_scores(scores, tests):
     return interpretations
 
 
-
 def determine_dominant_trait(scores, trait_pairs):
     """
     Определяет доминирующую черту в каждой паре противоположных характеристик.
     """
+    print("📊 Определение доминирующих черт...")
     dominant = {}
+
+    # Нормализуем имена черт
+    scores = {k.strip(): v for k, v in scores.items()}
+    trait_pairs = [(t1.strip(), t2.strip()) for t1, t2 in trait_pairs]
+
     for trait1, trait2 in trait_pairs:
-        s1, s2 = scores.get(trait1, 0), scores.get(trait2, 0)
+        s1 = scores.get(trait1, 0)
+        s2 = scores.get(trait2, 0)
+
         if s1 > s2:
             dominant[trait1], dominant[trait2] = "Доминирует", "Не доминирует"
         elif s2 > s1:
             dominant[trait2], dominant[trait1] = "Доминирует", "Не доминирует"
         else:
             dominant[trait1] = dominant[trait2] = "Не доминирует"
+
     return dominant
 
 
@@ -310,15 +500,25 @@ def process_other_tests(tests, responses):
     Обрабатывает все тесты, кроме темперамента и представлений.
     """
     print("🛠️ Обработка дополнительных тестов...")
+
     try:
-        excluded_traits = {"Сангвиник", "Холерик", "Меланхолик", "Флегматик", "Визуал", "Аудитив", "Кинестетик"}
+        excluded_traits = {"Сангвиник", "Холерик", "Меланхолик", "Флегматик", "Визуал", "Аудиал", "Кинестетик"}
         excluded_test_ids = {"temperament_test", "representative_system_test"}
 
-        filtered_tests = [t for t in tests if t.id not in excluded_test_ids] 
+        filtered_tests = [t for t in tests if t.id not in excluded_test_ids]
         trait_questions = group_questions_by_trait(filtered_tests)
-        trait_questions = {trait: q for trait, q in trait_questions.items() if trait not in excluded_traits}
+
+        # Убираем исключенные черты
+        trait_questions = {
+            trait: qs for trait, qs in trait_questions.items()
+            if trait.strip() not in excluded_traits
+        }
 
         scores = process_user_responses(filtered_tests, trait_questions, responses)
+
+        print("📊 ИТОГОВЫЕ БАЛЛЫ:")
+        for trait, score in scores.items():
+            print(f"{trait}: {score}")
 
         trait_pairs = [
             ("Интроверсия", "Экстраверсия"),
@@ -329,12 +529,14 @@ def process_other_tests(tests, responses):
         ]
         dominant_traits = determine_dominant_trait(scores, trait_pairs)
         print(f"dominant_traits: {dominant_traits}")
+
         only_dominant = filter_dominant_traits(dominant_traits)
         print(f"only_dominant_traits: {only_dominant}")
 
-
         adjusted = adjust_scores_for_number_of_questions(scores, trait_questions)
         limited = limit_score_range(adjusted)
+
+        # Можно раскомментировать, если хочешь выводить интерпретации
         # interpreted_scales = interpret_scores(limited, adjust_scale_values(filtered_tests))
 
         return {
@@ -342,6 +544,7 @@ def process_other_tests(tests, responses):
             # "interpretations": interpreted_scales,
             "dominant_traits": only_dominant
         }
+
     except Exception as e:
-        print(e)
-        return 
+        print(f"❌ Ошибка при обработке тестов: {e}")
+        return

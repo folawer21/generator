@@ -63,7 +63,6 @@ def process_psychological_test(tests, responses, tasks):
     }
 
     print("\n📝 Окончательный психологический портрет:")
-    pretty_print_portrait(final_portrait)
     return final_portrait
 
 from core.models import (
