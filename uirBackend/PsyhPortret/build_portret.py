@@ -85,36 +85,40 @@ def save_portrait_to_db(final_portrait: dict, student_id: int = 0):
             full_name=f"Студент {student_id}",
             group=group
         )
-
-    # Создаем психологический портрет
-    portrait = PsychologicalPortrait.objects.create(
-        student=student,
-        temperament=Temperament.objects.create(
-            temperament_type=final_portrait.get("Темперамент", "Неизвестно")
-        ),
-        representational_system=RepresentationalSystem.objects.create(
-            system_type=final_portrait.get("Репрезентативная система личности", "Неизвестно")
-        ),
-        recommendations="\n".join(final_portrait.get("Подходящие обучающие воздействия", []))
+    try:
+        # Создаем психологический портрет
+        portrait = PsychologicalPortrait.objects.create(
+            student=student,
+            temperament=Temperament.objects.create(
+                temperament_type=final_portrait.get("Темперамент", "Неизвестно")
+            ),
+            representational_system=RepresentationalSystem.objects.create(
+                system_type=final_portrait.get("Репрезентативная система личности", "Неизвестно")
+            ),
+            recommendations="\n".join(final_portrait.get("Подходящие обучающие воздействия", []))
     )
-
+    except Exception as e:
+        print(e)
     # Сохраняем черты личности
-    traits = final_portrait.get("Остальные характеристики", {}).get("Доминирующие черты", [])
-    for trait in traits:
-        if isinstance(trait, str) and ":" in trait:
-            trait_name, trait_value = map(str.strip, trait.split(":", 1))
-        else:
-            trait_name = "Характеристика"
-            trait_value = trait if isinstance(trait, str) else str(trait)
+    try:
+        traits = final_portrait.get("Остальные характеристики", {}).get("Доминирующие черты", [])
+        for trait in traits:
+            if isinstance(trait, str) and ":" in trait:
+                trait_name, trait_value = map(str.strip, trait.split(":", 1))
+            else:
+                trait_name = "Характеристика"
+                trait_value = trait if isinstance(trait, str) else str(trait)
 
-        # Создаем черту личности для психологического портрета
-        PsychProfileTrait.objects.create(
-            portrait=portrait,
-            trait_name=trait_name,
-            trait_value=trait_value
-        )
+            # Создаем черту личности для психологического портрета
+            PsychProfileTrait.objects.create(
+                portrait=portrait,
+                trait_name=trait_name,
+                trait_value=trait_value
+            )
 
-    print(f"✅ Психологический портрет для студента {student.full_name} сохранён в базе.")
+        print(f"✅ Психологический портрет для студента {student.full_name} сохранён в базе.")
+    except Exception as e:
+        print(e)
 
 def process_answers(full_name, group_name, answers):
     group, _ = Group.objects.get_or_create(name=group_name)
@@ -124,5 +128,8 @@ def process_answers(full_name, group_name, answers):
     responses = {int(qid): aid for qid, aid in answers.items()}
     final_portret = process_psychological_test(tests= tests, tasks= tasks, responses= responses)
     pretty_print_portrait(final_portret)
-    # student = Student.objects.create(full_name=full_name, group_name=group_name)
-    # save_portrait_to_db(final_portret, student.id)
+    try:
+        student = Student.objects.create(full_name=full_name, group=group_name)
+    except Exception as e:
+        print(e)
+    save_portrait_to_db(final_portret, student.id)
