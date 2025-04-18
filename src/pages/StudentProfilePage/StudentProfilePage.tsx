@@ -112,7 +112,13 @@ export const StudentProfilePage = (): JSX.Element => {
 
       <Divider orientation="left">Рекомендуемые обучающие воздействия</Divider>
       <List
-        dataSource={student.recommendations.split('\n')}  // Разделяем строку на части по переносу строки
+        dataSource={
+          student.recommendations
+            .replaceAll('\n', '')               // убираем все \n
+            .split(',')                         // разделяем по запятым
+            .map(item => item.trim())           // убираем лишние пробелы
+            .filter(item => item.length > 0)    // исключаем пустые
+        }
         renderItem={(item: string) => <List.Item>📌 {item}</List.Item>}
       />
     </Card>

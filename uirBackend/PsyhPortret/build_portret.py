@@ -1,7 +1,7 @@
 from .determine_temp import process_temp_test
 from .determine_reps_system import  process_rep_system_test
 from .determine_other_charactetistics import determine_dominant_trait, process_other_tests
-from .preffered_tasks import get_tasks_by_traits
+from .preffered_tasks import generate_learning_recommendation_from_traits
 import json
 from core.models import *
 
@@ -21,7 +21,7 @@ def pretty_print_portrait(portrait):
 
     # Выводим подходящие обучающие воздействия с эмодзи
     print("📚 Подходящие обучающие воздействия:")
-    for uz in portrait["Подходящие обучающие воздействия"]:
+    for uz in portrait["Подходящие обучающие воздействия"].split(", "):
         print(f"  - {uz} 🎯")
 
 
@@ -50,7 +50,7 @@ def process_psychological_test(tests, responses, tasks):
     # Фильтруем только доминирующие черты
     dominant_only_scores = other_results["dominant_traits"]
     dominant_charachteristics = dominant_only_scores + [dominant_temp, dominant_rep_system]
-    preffered_utz = get_tasks_by_traits(traits= dominant_charachteristics, data=tasks)
+    preffered_utz = generate_learning_recommendation_from_traits(traits= dominant_charachteristics)
     # Финальный портрет
     final_portrait = {
         "Темперамент": dominant_temp,
