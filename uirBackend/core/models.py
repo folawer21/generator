@@ -7,7 +7,15 @@ class Test(models.Model):
 
     def __str__(self):
         return self.test_name
+class Scale(models.Model):
+    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='scales')
+    trait = models.CharField(max_length=255)
+    min_score = models.IntegerField()
+    max_score = models.IntegerField()
 
+    def __str__(self):
+        return f"{self.trait} ({self.min_score}-{self.max_score})"
+    
 class Characteristic(models.Model):
     name = models.CharField(max_length=255)
 
@@ -30,7 +38,7 @@ class Answer(models.Model):
 
 class AnswerWeight(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    trait = models.ForeignKey(Characteristic, on_delete=models.CASCADE)  # Изменили на ForeignKey
+    trait = models.ForeignKey(Characteristic, on_delete=models.CASCADE)
     weight = models.IntegerField()
 
     def __str__(self):

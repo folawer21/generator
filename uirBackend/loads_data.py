@@ -6,13 +6,22 @@ import json
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'uirBackend.settings')
 django.setup()
 
-from core.models import Test, Characteristic, Question, Answer, AnswerWeight, CombinedTest, CombinedTestQuestion
+from core.models import Test, Characteristic, Question, Answer, AnswerWeight, CombinedTest, CombinedTestQuestion, Scale
 
 # Путь к JSON файлу с тестами
 file_paths = [
-    'output/input_data.json',      # Тесты с вопросами
-    'output/combined_test.json',   # Комбинированный тест
+    # 'output/input_data.json',      # Тесты с вопросами
+    # 'output/combined_test.json',   # Комбинированный тест
+    'output/new_input.json'
 ]
+from django.apps import apps
+
+# Получаем все модели твоего приложения (например, 'core')
+app_models = apps.get_app_config('core').get_models()
+
+# Удаляем все данные из каждой модели
+for model in app_models:
+    model.objects.all().delete()
 
 # Процесс загрузки данных
 for file_path in file_paths:
@@ -21,57 +30,53 @@ for file_path in file_paths:
         with open(file_path, 'r', encoding='utf-8') as file:
             json_data = json.load(file)
 
-        if file_path == 'output/input_data.json':
+        if file_path == 'output/new_input.json':
             print('Загружаем обычные тесты')
-            # Загрузка обычных тестов
             for test_data in json_data:
                 test_name = test_data.get("test_name")
                 characteristics = test_data.get("characteristics")
+                question_count = len(test_data['questions'])
+                if Test.objects.filter(test_name=test_name).exists():
+                    print(f"Тест с названием '{test_name}' уже существует. Пропускаем.")
+                    continue
+                
                 # Создание теста
-                test = Test.objects.create(test_name=test_name, characteristics=characteristics, question_count=len(test_data['questions']))
+                test = Test.objects.create(
+                    test_name=test_name,
+                    characteristics=characteristics,
+                    question_count=question_count
+                )
 
+                # Загрузка шкал
+                scales_data = test_data.get("scales", {})
+                for trait_name, bounds in scales_data.items():
+                    min_score = bounds.get("min_score", 0)
+                    max_score = bounds.get("max_score", 0)
+                    Scale.objects.create(
+                        test=test,
+                        trait=trait_name,
+                        min_score=min_score,
+                        max_score=max_score
+                    )
+
+                # Загрузка вопросов
+                print("Загрузка вопросов")
                 for question_data in test_data['questions']:
-                    question_text = question_data.get("question_text")
-
-                    # Создание вопроса
+                    question_text = question_data.get("text")
+                    print(question_text)
                     question = Question.objects.create(test=test, question_text=question_text)
 
                     for answer_data in question_data.get('answers', []):
-                        answer_text = answer_data.get("answer_text")
-                        weight = answer_data.get("weight")
-                        trait_name = answer_data.get("trait")
+                        answer_text = answer_data.get("answer")
+                        weight_dict = answer_data.get("weight", {})
 
-                        # Создание или получение характеристики
-                        characteristic, created = Characteristic.objects.get_or_create(name=trait_name)
-
-                        # Создание ответа и веса
+                        # Создание ответа
                         answer = Answer.objects.create(question=question, answer_text=answer_text)
-                        AnswerWeight.objects.create(question=question, trait=characteristic, weight=weight)
 
-        elif file_path == 'output/combined_test.json':
-            print('Загружаем комбинированный тест')
-            # Загрузка комбинированного теста
-            combined_test_name = json_data.get("combined_test_name")
-            characteristics = json_data.get("characteristics")
+                        # Обработка всех характеристик и их весов в weight
+                        for trait_name, weight in weight_dict.items():
+                            characteristic, _ = Characteristic.objects.get_or_create(name=trait_name)
+                            AnswerWeight.objects.create(question=question, trait=characteristic, weight=weight)
 
-            combined_test = CombinedTest.objects.create(combined_test_name=combined_test_name, characteristics=characteristics)
-
-            for test_data in json_data.get("tests", []):
-                test_name = test_data.get("test_name")
-                questions_count = test_data.get("questions_count")
-
-                # Получаем тест по имени
-                try:
-                    test = Test.objects.get(test_name=test_name)
-                except Test.DoesNotExist:
-                    print(f'Тест с именем {test_name} не найден')
-                    continue
-
-                questions = test.question_set.all()[:questions_count]
-
-                for question in questions:
-                    CombinedTestQuestion.objects.create(combined_test=combined_test, original_test=test, question=question)
-
-        print(f'Успешно загружены данные из {file_path}')
     except Exception as e:
-        print(f'Ошибка при загрузке данных из {file_path}: {e}')
+        print(f'Ошибка при обработке файла {file_path}: {e}')
