@@ -10,18 +10,17 @@ from core.models import Test, Characteristic, Question, Answer, AnswerWeight, Co
 
 # Путь к JSON файлу с тестами
 file_paths = [
-    # 'output/input_data.json',      # Тесты с вопросами
-    # 'output/combined_test.json',   # Комбинированный тест
-    'output/new_input.json'
+    'output/new_input.json'  # Путь к файлу с тестами
 ]
-from django.apps import apps
 
-# Получаем все модели твоего приложения (например, 'core')
-app_models = apps.get_app_config('core').get_models()
+# from django.apps import apps
 
-# Удаляем все данные из каждой модели
-for model in app_models:
-    model.objects.all().delete()
+# # Получаем все модели твоего приложения (например, 'core')
+# app_models = apps.get_app_config('core').get_models()
+
+# # Удаляем все данные из каждой модели
+# for model in app_models:
+#     model.objects.all().delete()
 
 # Процесс загрузки данных
 for file_path in file_paths:
@@ -63,7 +62,6 @@ for file_path in file_paths:
                 print("Загрузка вопросов")
                 for question_data in test_data['questions']:
                     question_text = question_data.get("text")
-                    print(question_text)
                     question = Question.objects.create(test=test, question_text=question_text)
 
                     for answer_data in question_data.get('answers', []):
@@ -76,7 +74,14 @@ for file_path in file_paths:
                         # Обработка всех характеристик и их весов в weight
                         for trait_name, weight in weight_dict.items():
                             characteristic, _ = Characteristic.objects.get_or_create(name=trait_name)
-                            AnswerWeight.objects.create(question=question, trait=characteristic, weight=weight)
+                            
+                            # Создание записи в AnswerWeight с новой связью
+                            AnswerWeight.objects.create(
+                                question=question,
+                                trait=characteristic,
+                                weight=weight,
+                                answer=answer  # Теперь связываем AnswerWeight с ответом
+                            )
 
     except Exception as e:
         print(f'Ошибка при обработке файла {file_path}: {e}')

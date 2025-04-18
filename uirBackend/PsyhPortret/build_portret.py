@@ -124,5 +124,6 @@ def process_answers(full_name, group_name, answers):
     tasks = list(LearningRecommendation.objects.all())  
     responses = {int(qid): aid for qid, aid in answers.items()}
     final_portret = process_psychological_test(tests= tests, tasks= tasks, responses= responses)
-    student = Student.objects.create(full_name=full_name, group_name=group_name)
-    save_portrait_to_db(final_portret, student.id)
+    pretty_print_portrait(final_portret)
+    # student = Student.objects.create(full_name=full_name, group_name=group_name)
+    # save_portrait_to_db(final_portret, student.id)

@@ -32,26 +32,19 @@ def get_questions_by_characteristics(characteristics: list[str]) -> dict:
 def get_all_characteristics():
     """
     Получает список всех уникальных характеристик из базы данных, объединяя характеристики для каждого теста в одну строку.
-
-    :return: список характеристик с объединенными характеристиками для каждого теста
     """
-    # Получаем все тесты и их характеристики
     tests = Test.objects.all()
     test_characteristics = defaultdict(list)
 
-    # Группируем характеристики по тестам
     for test in tests:
-        for question in test.question_set.all():
+        for question in test.questions.all():  # ✅ используем правильный related_name
             for answer_weight in question.answerweight_set.all():
-                # Добавляем характеристику для каждого теста
                 characteristic = answer_weight.trait
                 if characteristic.name not in test_characteristics[test.id]:
                     test_characteristics[test.id].append(characteristic.name)
 
-    # Формируем результат
     result = []
     for test_id, characteristics in test_characteristics.items():
-        # Объединяем характеристики в одну строку с разделителем '/'
         combined_characteristics = ", ".join(characteristics)
         result.append({
             "id": test_id,

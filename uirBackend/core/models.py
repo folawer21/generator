@@ -23,14 +23,20 @@ class Characteristic(models.Model):
         return self.name
 
 class Question(models.Model):
-    test = models.ForeignKey(Test, on_delete=models.CASCADE)
+    test = models.ForeignKey(Test, on_delete=models.CASCADE, related_name='questions')
     question_text = models.TextField()
 
     def __str__(self):
         return self.question_text
+    
+    def get_traits(self):
+        """
+        Получает список характеристик для этого вопроса через AnswerWeight.
+        """
+        return [aw.trait for aw in self.answerweight_set.all()]
 
 class Answer(models.Model):
-    question = models.ForeignKey(Question, on_delete=models.CASCADE)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name="answers")
     answer_text = models.TextField()
 
     def __str__(self):
@@ -40,6 +46,7 @@ class AnswerWeight(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     trait = models.ForeignKey(Characteristic, on_delete=models.CASCADE)
     weight = models.IntegerField()
+    answer = models.ForeignKey(Answer, related_name='weights', on_delete=models.CASCADE)  # Связь с ответом
 
     def __str__(self):
         return f"{self.trait}: {self.weight}"

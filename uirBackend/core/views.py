@@ -84,6 +84,8 @@ def get_combined_test(request):
                 return JsonResponse([], status=400)
 
             questions = get_combined_test_questions(test_id)
+
+            print(f"questions: {questions} ")
             return JsonResponse(questions, safe=False)  # Передаем вопросы в ответе
 
         except json.JSONDecodeError:
