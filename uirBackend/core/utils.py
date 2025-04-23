@@ -9,6 +9,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import get_object_or_404
 from PsyhPortret.build_portret import process_answers
 
+import logging
+# Инициализируем логгер
+logger = logging.getLogger(__name__)
 
 generated_test = []
 
@@ -108,114 +111,122 @@ def get_all_questions_with_answers():
     return formatted_questions
 
 
-def get_tests_by_characteristics(characteristics_list):
-    """
-    Получает список тестов, которые выявляют переданные характеристики, 
-    выбирает уникальные вопросы для каждой характеристики и возвращает результат в виде JSON-структуры.
-    """
-    # Разворачиваем вложенные строки с запятыми в отдельные элементы
-    expanded_characteristics = []
-    for characteristic in characteristics_list:
-        expanded_characteristics.extend([char.strip() for char in characteristic.split(",")])
+# def get_tests_by_characteristics(characteristics_list):
+#     """
+#     Получает список тестов, которые выявляют переданные характеристики, 
+#     выбирает уникальные вопросы для каждой характеристики и возвращает результат в виде JSON-структуры.
+#     """
+#     # Разворачиваем вложенные строки с запятыми в отдельные элементы
+#     expanded_characteristics = []
+#     for characteristic in characteristics_list:
+#         expanded_characteristics.extend([char.strip() for char in characteristic.split(",")])
 
-    characteristics_list = expanded_characteristics
+#     characteristics_list = expanded_characteristics
 
-    # Словарь, который будет хранить результаты по каждой характеристике
-    characteristics_questions = {}
-    original_tests = set()
+#     # Словарь, который будет хранить результаты по каждой характеристике
+#     characteristics_questions = {}
+#     original_tests = set()
 
-    # Перебираем все характеристики, которые переданы на backend
-    for characteristic_name in characteristics_list:
-        # Получаем все веса ответов, связанные с данной характеристикой
-        answer_weights = AnswerWeight.objects.filter(trait__name=characteristic_name)
+#     # Перебираем все характеристики, которые переданы на backend
+#     for characteristic_name in characteristics_list:
+#         # Получаем все веса ответов, связанные с данной характеристикой
+#         answer_weights = AnswerWeight.objects.filter(trait__name=characteristic_name)
         
-        # Для данной характеристики собираем уникальные вопросы
-        unique_questions = set()
+#         # Для данной характеристики собираем уникальные вопросы
+#         unique_questions = set()
 
-        for answer_weight in answer_weights:
-            question = answer_weight.question
-            # Добавляем вопросы в множество, чтобы исключить дубли
-            unique_questions.add(question)
-            original_tests.add(question.test)
-        # Для каждой характеристики выбираем только один вопрос (например, первый)
-        if unique_questions:
-            characteristics_questions[characteristic_name] = [{
-                "id": question.id,
-                "text": question.question_text
-            } for question in unique_questions]
+#         for answer_weight in answer_weights:
+#             question = answer_weight.question
+#             # Добавляем вопросы в множество, чтобы исключить дубли
+#             unique_questions.add(question)
+#             original_tests.add(question.test)
+#         # Для каждой характеристики выбираем только один вопрос (например, первый)
+#         if unique_questions:
+#             characteristics_questions[characteristic_name] = [{
+#                 "id": question.id,
+#                 "text": question.question_text
+#             } for question in unique_questions]
 
-    return characteristics_questions, original_tests
+#     return characteristics_questions, original_tests
 
 
-def get_unique_questions_with_answers(characteristics_list):
-    """
-    Получает список вопросов из get_tests_by_characteristics(),
-    убирает дубликаты и добавляет ответы к каждому вопросу.
-    """
-    # Получаем вопросы по характеристикам
-    characteristics_questions, original_tests = get_tests_by_characteristics(characteristics_list)
+# def get_unique_questions_with_answers(characteristics_list):
+#     """
+#     Получает список вопросов из get_tests_by_characteristics(),
+#     убирает дубликаты и добавляет ответы к каждому вопросу.
+#     """
+#     # Получаем вопросы по характеристикам
+#     characteristics_questions, original_tests = get_tests_by_characteristics(characteristics_list)
 
-    # Используем словарь, чтобы избежать дублирования вопросов
-    unique_questions = {}
+#     # Используем словарь, чтобы избежать дублирования вопросов
+#     unique_questions = {}
 
-    for characteristic, questions in characteristics_questions.items():
-        for question_data in questions:  # Теперь это список, а не словарь
-            question_id = question_data["id"]
+#     for characteristic, questions in characteristics_questions.items():
+#         for question_data in questions:  # Теперь это список, а не словарь
+#             question_id = question_data["id"]
 
-            # Если вопрос уже добавлен, пропускаем его
-            if question_id not in unique_questions:
-                unique_questions[question_id] = {
-                    "id": question_id,
-                    "text": question_data["text"],
-                    "answers": []
-                }
+#             # Если вопрос уже добавлен, пропускаем его
+#             if question_id not in unique_questions:
+#                 unique_questions[question_id] = {
+#                     "id": question_id,
+#                     "text": question_data["text"],
+#                     "answers": []
+#                 }
 
-    # Добавляем ответы к каждому уникальному вопросу
-    for question_id in unique_questions:
-        answers = Answer.objects.filter(question_id=question_id)
-        unique_questions[question_id]["answers"] = [
-            {"id": answer.id, "text": answer.answer_text} for answer in answers
-        ]
+#     # Добавляем ответы к каждому уникальному вопросу
+#     for question_id in unique_questions:
+#         answers = Answer.objects.filter(question_id=question_id)
+#         unique_questions[question_id]["answers"] = [
+#             {"id": answer.id, "text": answer.answer_text} for answer in answers
+#         ]
 
-    # Преобразуем словарь в список уникальных вопросов
-    questions_list = list(unique_questions.values())
-    random.shuffle(questions_list)
-    return questions_list[:-5], original_tests
+#     # Преобразуем словарь в список уникальных вопросов
+#     questions_list = list(unique_questions.values())
+#     random.shuffle(questions_list)
+#     return questions_list[:-5], original_tests
 
 def save_combined_test_to_db(generated_test_name, characteristics_list, questions_list, original_tests):
     """
     Сохраняет комбинированный тест в базу данных, добавляет вопросы с привязкой к исходным тестам.
     """
-    # Создаем комбинированный тест
-    combined_test = CombinedTest.objects.create(
-        combined_test_name=generated_test_name,
-        characteristics=" / ".join(characteristics_list)  # Соединяем характеристики в строку
-    )
+    logger.info("📥 Сохраняем комбинированный тест в БД...")
 
-    # Добавляем вопросы в комбинированный тест
-    for question_data in questions_list:
-        # Ищем вопрос в базе данных
-        question = Question.objects.get(id=question_data["id"])
-
-        # Сохраняем связь с оригинальными тестами
-        original_test = next(test for test in original_tests if test.test_name == question.test.test_name)
-
-        # Создаем запись в CombinedTestQuestion
-        CombinedTestQuestion.objects.create(
-            combined_test=combined_test,
-            original_test=original_test,
-            question=question
+    try:
+        # Создаем комбинированный тест
+        combined_test = CombinedTest.objects.create(
+            combined_test_name=generated_test_name,
+            characteristics=" / ".join(characteristics_list)  # Соединяем характеристики в строку
         )
 
-    return combined_test
+        # Добавляем вопросы в комбинированный тест
+        for question_data in questions_list:
+            # Ищем вопрос в базе данных
+            question = Question.objects.get(id=question_data["id"])
 
-import time
+            # Сохраняем связь с оригинальными тестами
+            # original_test = next(test for test in original_tests if test.test_name == question.test.test_name)
+            original_test = next((test for test in original_tests if test.test_name == question.test.test_name), None)
+            if original_test is None:
+                logger.warning(f"Оригинальный тест для вопроса '{question}' не найден")
+                continue
 
-def generate_test_by_characteristic(characteristics_list,test_name = "Новый тест"):
-    test, original_tests = get_unique_questions_with_answers(characteristics_list)
-    save_combined_test_to_db(test_name,characteristics_list,test,original_tests)
-    time.sleep(2.5)
-    return test
+            # Создаем запись в CombinedTestQuestion
+            CombinedTestQuestion.objects.create(
+                combined_test=combined_test,
+                original_test=original_test,
+                question=question
+            )
+
+        return combined_test
+    except Exception as e:
+        logger.error(f"Ошибка при сохранении теста: {e}")
+
+
+# def generate_test_by_characteristic(characteristics_list,test_name = "Новый тест"):
+#     test, original_tests = get_unique_questions_with_answers(characteristics_list)
+#     save_combined_test_to_db(test_name,characteristics_list,test,original_tests)
+#     time.sleep(2.5)
+#     return test
 
 @csrf_exempt
 def delete_combined_test_by_id(test_id):
@@ -328,3 +339,51 @@ def submit_test_results(request):
             return JsonResponse({"error": str(e)}, status=500)
 
     return JsonResponse({"error": "Только POST-запросы разрешены"}, status=405)
+
+
+
+from genetics.genetic_algorythm import GeneticTestGenerator
+from genetics.question_wrapper import QuestionWrapper
+from .models import Question
+
+
+def generate_test_by_characteristics(characteristics, name="Безымянный"):
+    try:
+        # Получаем список всех доступных вопросов
+        questions = Question.objects.all()
+
+        # Преобразуем вопросы в объекты QuestionWrapper
+        question_wrappers = [QuestionWrapper(question) for question in questions]
+
+        # Инициализируем генетический алгоритм с характеристиками
+        genetic_algorithm = GeneticTestGenerator(
+            question_wrappers, num_generations=20, population_size=30, mutation_rate=0.1, lambda1=0.5, lambda2=0.3
+        )
+        
+        # Генерируем тест
+        logger.info("🚀 Запуск генетического алгоритма для генерации теста")
+        best_chromosome = genetic_algorithm.generate()
+
+        # Получаем выбранные вопросы на основе хромосомы
+        selected_questions = [question_wrappers[i] for i in range(len(best_chromosome)) if best_chromosome[i] == 1]
+
+        # Возвращаем результат пользователю (можно отобразить их в JSON)
+        selected_questions_text = [q.text for q in selected_questions]
+        original_tests = list({q.original.test for q in selected_questions})
+
+        logger.info(f"✅ Генерация завершена. {len(selected_questions_text)} вопросов были выбраны.")
+        save_combined_test_to_db(
+            generated_test_name=name,
+            characteristics_list=characteristics,
+            questions_list=[{"id": q.original.id} for q in selected_questions],
+            original_tests=original_tests
+        )
+    
+        return {
+            'test_name': name if name else "Без названия",
+            'selected_questions': selected_questions_text
+        }
+    except Exception as e:
+        logger.error(f"Ошибка при генерации теста: {e}")
+        return {"error": "Ошибка при генерации теста"}
+    

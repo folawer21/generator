@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.conf import settings
 import os
 from django.views.decorators.csrf import csrf_exempt  # для отключения CSRF для POST-запросов
-from .utils import get_all_generated_tests, get_all_characteristics, get_all_questions_with_answers, generate_test_by_characteristic, delete_combined_test_by_id, get_combined_test_questions, get_all_groups_with_students, get_student_psychological_portrait, submit_test_results
+from .utils import get_all_generated_tests, get_all_characteristics, get_all_questions_with_answers, delete_combined_test_by_id, get_combined_test_questions, get_all_groups_with_students, get_student_psychological_portrait, submit_test_results, generate_test_by_characteristics 
 # Получите путь к файлу с моковыми данными
 mock_data_path = os.path.join(settings.BASE_DIR, 'core', 'mock_data.json')
 
@@ -14,9 +14,32 @@ with open(mock_data_path, 'r') as file:
 def get_questions(request):
     return JsonResponse(get_all_questions_with_answers(), safe=False)
 
+# @csrf_exempt  # Этот декоратор отключает проверку CSRF для этой функции
+# def generate_test(request):
+#     # Получаем данные из тела запроса
+#     if request.method == "POST":
+#         try:
+#             # Десериализуем JSON из тела запроса
+#             data = json.loads(request.body)
+            
+#             # Извлекаем список характеристик
+#             characteristics = data.get("characteristics", [])
+#             name = data.get("test_name")
+            
+#             if characteristics:
+#                 if name:
+#                     return JsonResponse(generate_test_by_characteristic(characteristics,name), safe=False)
+#                 return JsonResponse(generate_test_by_characteristic(characteristics), safe=False)
+                
+#             else:
+#                 return JsonResponse({"error": "Характеристики ил не переданы"}, status=400)
+#         except json.JSONDecodeError:
+#             return JsonResponse({"error": "Неверный формат данных"}, status=400)
+#     else:
+#         return JsonResponse({"error": "Метод запроса должен быть POST"}, status=405)
+
 @csrf_exempt  # Этот декоратор отключает проверку CSRF для этой функции
 def generate_test(request):
-    # Получаем данные из тела запроса
     if request.method == "POST":
         try:
             # Десериализуем JSON из тела запроса
@@ -27,17 +50,16 @@ def generate_test(request):
             name = data.get("test_name")
             
             if characteristics:
-                if name:
-                    return JsonResponse(generate_test_by_characteristic(characteristics,name), safe=False)
-                return JsonResponse(generate_test_by_characteristic(characteristics), safe=False)
+                # Вызов функции для генерации теста
+                result = generate_test_by_characteristics(characteristics, name)
                 
+                return JsonResponse(result, safe=False)
             else:
-                return JsonResponse({"error": "Характеристики ил не переданы"}, status=400)
+                return JsonResponse({"error": "Характеристики не переданы"}, status=400)
         except json.JSONDecodeError:
             return JsonResponse({"error": "Неверный формат данных"}, status=400)
     else:
         return JsonResponse({"error": "Метод запроса должен быть POST"}, status=405)
-
 
 def get_characteristics(request):
     return JsonResponse(get_all_characteristics(), safe=False)
