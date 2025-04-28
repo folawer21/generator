@@ -357,7 +357,7 @@ def generate_test_by_characteristics(characteristics, name="Безымянный
 
         # Инициализируем генетический алгоритм с характеристиками
         genetic_algorithm = GeneticTestGenerator(
-            question_wrappers, num_generations=20, population_size=30, mutation_rate=0.1, lambda1=0.5, lambda2=0.3
+            question_wrappers, num_generations=25, population_size=int(len(question_wrappers)*0.85), mutation_rate=0.1, lambda1=0.5, lambda2=0.3
         )
         
         # Генерируем тест
